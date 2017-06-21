@@ -73,7 +73,6 @@ class IndexFiles
     @terms.each do |word, details|
       files_having_term_count = details[:occurences].keys.count
       idf = Math.log(number_of_docs.to_f/files_having_term_count, 2)
-      # p "idf: #{idf}, number_of_docs: #{number_of_docs}, files_having_term_count: #{files_having_term_count}"
       details[:occurences].each do |file_id, positions|
         df = positions.size
         @document[file_id][word][:df] = df
@@ -84,6 +83,3 @@ class IndexFiles
   end
 
 end
-
-hh = IndexFiles.new("/Users/sony/codes/others/useful-random-scripts/stl_learning")
-hh.start
