@@ -31,18 +31,18 @@ class InvertedIndex
   end
 
   def index_document(file_id, file_path)
-    @document[file_id] ||= { total: 0 }
+    @document[file_id] ||= {}
     f = File.new(file_path)
     prev_fp = f.tell
     f.each_line do |line|
-      words = tokenize_line(line)
+      words = tokenize(line)
       progressive_index(words, file_id, prev_fp)
       prev_fp = f.tell
     end
   end
 
-  def tokenize_line(line)
-    line.gsub(STOPPER, ' ').gsub(/(\s)+/i, ' ').split(' ').map(&:downcase)
+  def tokenize(str)
+    str.gsub(STOPPER, ' ').gsub(/(\s)+/i, ' ').split(' ').map(&:downcase)
   end
 
   def progressive_index(words, file_id, prev_fp)
@@ -55,7 +55,6 @@ class InvertedIndex
   def update_document_index(file_id, word)
     @document[file_id][word] ||= { count: 0 }
     @document[file_id][word][:count] += 1
-    @document[file_id][:total] += 1
   end
 
   def update_term_index(file_id, prev_fp, word)
@@ -76,6 +75,7 @@ class InvertedIndex
 
   def calculate_weights
     @terms.each { |word, postings| term_weight(word, postings) }
+    normalize_weights
   end
 
   def term_weight(word, postings)
@@ -85,9 +85,17 @@ class InvertedIndex
       idf = Math.log(@document.keys.size.to_f/df)
       tf = positions.size
 
-      @document[file_id][word][:tf] = tf
-      @document[file_id][word][:idf] = idf
-      @document[file_id][word][:weight] = tf * idf
+      # @document[file_id][word][:tf] = tf
+      # @document[file_id][word][:idf] = idf
+      @document[file_id][word][:wt] = tf * idf
+    end
+  end
+
+  def normalize_weights
+    @document.each do |f, dict|
+      msq = dict.map { |w, d| d[:wt]*d[:wt] }.reduce(:+)
+      msqrt = Math.sqrt(msq)
+      dict.each { |w, d| d[:nwt] = d[:wt]/msqrt }
     end
   end
 
