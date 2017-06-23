@@ -1,4 +1,4 @@
-class BuildIndex
+class InvertedIndex
 
   attr_accessor :path, :files, :terms, :document
 

@@ -1,6 +1,6 @@
-require 'build_index.rb'
+require 'inverted_index'
 
-class QueryIndex
+class Query
 
   attr_accessor :path, :query, :q_tokens, :q_vector, :qtf, :reverse_index, :matches, :file_weights
 
@@ -8,7 +8,7 @@ class QueryIndex
 
   def initialize(dir_path)
     @path = dir_path
-    @reverse_index = ::BuildIndex.new(dir_path)
+    @reverse_index = ::InvertedIndex.new(dir_path)
     @reverse_index.start
   end
 
@@ -36,7 +36,7 @@ class QueryIndex
   end
 
   def tokenize_query
-    @q_tokens = @query.gsub(BuildIndex::STOPPER, ' ').gsub(/(\s)+/i, ' ').split(' ').map(&:downcase)
+    @q_tokens = @query.gsub(InvertedIndex::STOPPER, ' ').gsub(/(\s)+/i, ' ').split(' ').map(&:downcase)
     @qtf = @q_tokens.group_by { |w| w }.map { |w, ws| [w, ws.length] }.to_h
   end
 
@@ -86,5 +86,5 @@ class QueryIndex
 
 end
 
-kk = QueryIndex.new('/Users/sony/codes/others/useful-random-scripts')
+kk = Query.new('/Users/sony/codes/others/useful-random-scripts')
 kk.find('PaperFold')
