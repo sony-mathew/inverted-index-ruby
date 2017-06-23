@@ -1,7 +1,3 @@
-# Ref :
-# 1. https://nlp.stanford.edu/IR-book/html/htmledition/contents-1.html
-# 2. https://en.wikipedia.org/wiki/Vector_space_model
-
 class BuildIndex
 
   attr_accessor :path, :files, :terms, :document
@@ -19,7 +15,7 @@ class BuildIndex
   def start
     file_list
     index_files
-    weight_vector
+    calculate_weights
   end
 
   def file_list
@@ -78,21 +74,20 @@ class BuildIndex
     @terms[word][:occurences][file_id] << prev_fp
   end
 
-  def weight_vector
-    number_of_docs = @document.keys.size
-    @terms.each do |word, details|
-      files_having_term_count = details[:occurences].keys.count
-      idf = Math.log(number_of_docs.to_f/files_having_term_count, 2)
-      word_rankings(word, details, idf)
-    end
+  def calculate_weights
+    @terms.each { |word, postings| term_weight(word, postings) }
   end
 
-  def word_rankings(word, word_map, idf)
-    word_map[:occurences].each do |file_id, positions|
+  def term_weight(word, postings)
+    postings[:occurences].each do |file_id, positions|
+
       df = positions.size
-      @document[file_id][word][:df] = df
+      idf = Math.log(@document.keys.size.to_f/df)
+      tf = positions.size
+
+      @document[file_id][word][:tf] = tf
       @document[file_id][word][:idf] = idf
-      @document[file_id][word][:weight] = df * idf
+      @document[file_id][word][:weight] = tf * idf
     end
   end
 
