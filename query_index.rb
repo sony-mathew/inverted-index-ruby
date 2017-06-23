@@ -6,9 +6,9 @@ class QueryIndex
 
   MAX_RESULTS = 5
 
-  def intialize(dir_path)
+  def initialize(dir_path)
     @path = dir_path
-    @reverse_index = BuildIndex.new(dir_path)
+    @reverse_index = ::BuildIndex.new(dir_path)
     @reverse_index.start
   end
 
@@ -18,16 +18,20 @@ class QueryIndex
   end
 
   def init_query(q)
-    @query_vector = {}
+    @q_vector = {}
     @matches = {}
     @file_weights = {}
     @query = q
     tokenize_query
-    query_vector_weight
   end
 
   def search_index
     find_matches
+    if @matches.empty?
+      puts "No results"
+      return
+    end
+    query_vector_weight
     cosine_similarity(matches)
   end
 
@@ -38,14 +42,14 @@ class QueryIndex
 
   def query_vector_weight
     number_of_docs = @reverse_index.document.keys.size + 1
-    @qtf.each { |word, freq| weight_of_term(word, freq, number_of_docs) }
+    @qtf.each { |word, freq| token_weight(word, freq, number_of_docs) }
   end
 
   def token_weight(word, freq, number_of_docs)
     @q_vector[word] ||= {}
     @q_vector[word][:df] = freq
     
-    files_having_term_count = @reverse_index[word][:occurences].keys.count + 1
+    files_having_term_count = @reverse_index.terms[word][:occurences].keys.count + 1
     idf = Math.log(number_of_docs.to_f/files_having_term_count, 2)
 
     @q_vector[word][:idf] = idf
@@ -61,9 +65,9 @@ class QueryIndex
   def cosine_similarity(matches)
     matching_files = @matches.map { |word, details| details[:occurences].keys }.flatten.uniq
     matching_files.each do |file_id|
-      cumulative_weights = 0
-      msqrt_doc = 0
-      msqrt_query = 0
+      cumulative_weights = 0.0
+      msqrt_doc = 0.0
+      msqrt_query = 0.0
       @qtf.each do |word, freq|
         wtd = (@reverse_index.document[file_id][word] || {})[:weight]
         wtq = @q_vector[word][:weight]
@@ -72,11 +76,15 @@ class QueryIndex
         msqrt_doc += (wtd*wtd)
         msqrt_query += (wtq*wtq)
       end
-      msqrt_doc = Math.sqrt(msqrt_doc)
-      msqrt_query = Math.sqrt(msqrt_query)
-      dot_product = cumulative_weights/(msqrt_doc*msqrt_query)
+      msqrt = (Math.sqrt(msqrt_doc) * Math.sqrt(msqrt_query))
+      p "msqrt : #{msqrt}, cw : #{cumulative_weights}"
+      dot_product = cumulative_weights.to_f/msqrt
+      p "dot_product : #{dot_product}"
       @file_weights[file_id] = dot_product
     end
   end
 
 end
+
+kk = QueryIndex.new('/Users/sony/codes/others/useful-random-scripts')
+kk.find('PaperFold')

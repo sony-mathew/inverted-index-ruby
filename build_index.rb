@@ -23,7 +23,7 @@ class BuildIndex
   end
 
   def file_list
-    valid_file_paths = Dir.glob("#{path}/*.{#{FILE_EXTS.join(',')}}")
+    valid_file_paths = Dir.glob("#{path}/**/*.{#{FILE_EXTS.join(',')}}")
     index_map = valid_file_paths.each_with_index.map { |x, i| [i+1, x] }
     @files = Hash[index_map]
   end
@@ -83,7 +83,7 @@ class BuildIndex
     @terms.each do |word, details|
       files_having_term_count = details[:occurences].keys.count
       idf = Math.log(number_of_docs.to_f/files_having_term_count, 2)
-      word_rankings(word, word_map, idf)
+      word_rankings(word, details, idf)
     end
   end
 
