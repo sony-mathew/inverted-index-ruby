@@ -14,6 +14,7 @@ Vector space model is an algebraic model for representing text documents as vect
 
 ### Example
 
+
 ```sh
 $ irb
 > require_relative 'query'
